@@ -18,14 +18,12 @@ public class Genre {
     @ManyToMany(mappedBy = "genres")
     private Set<Movie> movies = new HashSet<>();
 
-    // Constructors
     public Genre() {}
 
     public Genre(String name) {
         this.name = name;
     }
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
