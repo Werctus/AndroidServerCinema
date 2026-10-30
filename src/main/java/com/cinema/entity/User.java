@@ -1,10 +1,13 @@
 package com.cinema.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
+@Builder
 public class User {
 
     @Id
