@@ -28,7 +28,7 @@ public class BookingController {
             HttpServletRequest request,
             @Valid @RequestBody BookingRequest dto) {
 
-        // Извлекаем userId из токена (безопаснее, чем trusting client)
+        // Извлекаем userId из токена
         String token = request.getHeader("Authorization").substring(7);
         Long userId = jwtUtil.extractUserId(token);
 

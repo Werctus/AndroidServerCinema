@@ -31,7 +31,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse createBooking(Long userId, BookingRequest request) {
-        // 1. Валидация существования сущностей
+        // Валидация существования сущностей
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessLogicException("Пользователь не найден"));
 
@@ -43,7 +43,7 @@ public class BookingServiceImpl implements BookingService {
             throw new BusinessLogicException("Нельзя забронировать прошедший сеанс");
         }
 
-        // 2. Проверка доступности мест (бизнес-логика)
+        // Проверка доступности мест (бизнес-логика)
         List<Long> occupiedSeatIds = bookedSeatRepository
                 .findOccupiedSeatsBySessionId(session.getId())
                 .stream()
@@ -58,7 +58,7 @@ public class BookingServiceImpl implements BookingService {
             throw new BusinessLogicException("Следующие места уже заняты: " + conflictingSeats);
         }
 
-        // 3. Создание брони
+        // Создание брони
         Booking booking = new Booking(user, session);
         booking.setStatus(BookingStatus.PENDING);
 
@@ -83,11 +83,11 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // 4. Отправка уведомления (асинхронно или синхронно в зависимости от требований)
+        // Отправка уведомления (асинхронно или синхронно в зависимости от требований)
         try {
             notificationService.sendBookingConfirmation(user.getEmail(), savedBooking);
         } catch (Exception e) {
-            // Логируем ошибку почты, но НЕ прерываем транзакцию брони
+            // Логируем ошибку почты, не прерывая транзакцию брони
             System.err.println("Ошибка отправки email: " + e.getMessage());
         }
 
