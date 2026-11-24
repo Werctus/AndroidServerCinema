@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,4 +32,10 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     // Поиск сеансов для афиши на определенную дату
     @Query("SELECT s FROM Session s WHERE FUNCTION('DATE', s.startTime) = :date")
     List<Session> findByDate(@Param("date") java.time.LocalDate date);
+
+    @Query("SELECT s FROM Session s WHERE CAST(s.startTime AS date) = :date")
+    List<Session> findByStartTimeDate(@Param("date") LocalDate date);
+
+    @Query("SELECT s FROM Session s WHERE s.movie.id = :movieId AND CAST(s.startTime AS date) = :date")
+    List<Session> findByMovieIdAndDate(@Param("movieId") Long movieId, @Param("date") LocalDate date);
 }

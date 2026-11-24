@@ -32,12 +32,11 @@ public class PublicMovieController {
         return ResponseEntity.ok(movieService.searchMovies(query));
     }
 
-    // Расписание сеансов на конкретную дату
+    // Расписание сеансов фильма на конкретную дату
     @GetMapping("/{id}/sessions")
     public ResponseEntity<List<SessionResponse>> getSessions(
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        // Можно фильтровать сеансы конкретного фильма на дату
-        return ResponseEntity.ok(sessionService.getSessionsByDate(date));
+        return ResponseEntity.ok(sessionService.getSessionsByMovieAndDate(id, date));
     }
 }

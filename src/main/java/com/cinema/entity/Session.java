@@ -1,10 +1,13 @@
 package com.cinema.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Data
 @Table(name = "sessions")
 public class Session {
 
@@ -28,7 +31,6 @@ public class Session {
 
     private String format = "2D"; // 2D, 3D, IMAX
 
-    // Constructors
     public Session() {}
 
     public Session(Movie movie, Hall hall, LocalDateTime startTime, BigDecimal price) {
@@ -38,8 +40,7 @@ public class Session {
         this.price = price;
     }
 
-    // Getters and Setters
-    public Long getId() { return id; }
+/*    public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public Movie getMovie() { return movie; }
@@ -55,5 +56,5 @@ public class Session {
     public void setPrice(BigDecimal price) { this.price = price; }
 
     public String getFormat() { return format; }
-    public void setFormat(String format) { this.format = format; }
+    public void setFormat(String format) { this.format = format; }*/
 }

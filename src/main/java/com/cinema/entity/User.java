@@ -1,6 +1,7 @@
 package com.cinema.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 @Builder
+@AllArgsConstructor
 public class User {
 
     @Id
