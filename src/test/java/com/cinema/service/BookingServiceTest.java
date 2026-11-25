@@ -43,7 +43,13 @@ class BookingServiceTest {
     private BookedSeatRepository bookedSeatRepository;
 
     @Mock
+    private TicketRepository ticketRepository;
+
+    @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private QrCodeService qrCodeService;
 
     @InjectMocks
     private BookingServiceImpl bookingService;
@@ -152,5 +158,36 @@ class BookingServiceTest {
         assertThatThrownBy(() -> bookingService.createBooking(1L, request))
                 .isInstanceOf(BusinessLogicException.class)
                 .hasMessageContaining("прошедший сеанс");
+    }
+
+    @Test
+    @DisplayName("Подтверждение оплаты и генерация билета с QR-кодом")
+    void shouldConfirmPaymentAndGenerateTicket() {
+        // Arrange
+        Booking pendingBooking = new Booking(testUser, testSession);
+        pendingBooking.setId(200L);
+        pendingBooking.setStatus(BookingStatus.PENDING);
+        pendingBooking.setTotalAmount(new BigDecimal("300"));
+        pendingBooking.setBookedSeats(List.of(new BookedSeat(pendingBooking, testSeat, new BigDecimal("300"))));
+
+        when(bookingRepository.findById(200L)).thenReturn(Optional.of(pendingBooking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ticketRepository.findByBookingId(200L)).thenReturn(Optional.empty());
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> {
+            Ticket t = invocation.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+
+        // Act
+        BookingResponse response = bookingService.confirmPayment(200L);
+
+        // Assert
+        assertThat(response.getStatus()).isEqualTo("CONFIRMED");
+        assertThat(response.getTicket()).isNotNull();
+        assertThat(response.getTicket().getTicketNumber()).startsWith("KINO-");
+        assertThat(response.getTicket().getQrCode()).isNotBlank();
+
+        verify(ticketRepository, times(1)).save(any(Ticket.class));
     }
 }

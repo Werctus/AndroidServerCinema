@@ -20,4 +20,10 @@ public interface BookingService {
 
     // Проверка доступности мест
     boolean areSeatsAvailable(Long sessionId, List<Long> seatIds);
+
+    // Получение билета по ID бронирования
+    BookingResponse.TicketInfo getTicketByBookingId(Long bookingId);
+
+    // Генерация изображения QR-кода билета (PNG)
+    byte[] getTicketQrCodeImage(Long bookingId);
 }

@@ -7,14 +7,17 @@ import com.cinema.exception.BusinessLogicException;
 import com.cinema.repository.*;
 import com.cinema.service.BookingService;
 import com.cinema.service.NotificationService;
+import com.cinema.service.QrCodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,7 +29,9 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final SeatRepository seatRepository;
     private final BookedSeatRepository bookedSeatRepository;
+    private final TicketRepository ticketRepository;
     private final NotificationService notificationService;
+    private final QrCodeService qrCodeService;
 
     @Override
     @Transactional
@@ -69,9 +74,10 @@ public class BookingServiceImpl implements BookingService {
             Seat seat = seatRepository.findById(seatId)
                     .orElseThrow(() -> new BusinessLogicException("Место не найдено"));
 
-            // Фиксируем цену на момент бронирования
-            BigDecimal seatPrice = session.getPrice();
-            // Здесь можно добавить логику наценок для VIP мест, если нужно
+            // Фиксируем цену на момент бронирования (учитываем наценку для VIP)
+            BigDecimal seatPrice = "VIP".equalsIgnoreCase(seat.getSeatType())
+                    ? session.getPrice().multiply(new BigDecimal("1.5"))
+                    : session.getPrice();
 
             BookedSeat bookedSeat = new BookedSeat(booking, seat, seatPrice);
             bookedSeats.add(bookedSeat);
@@ -105,9 +111,20 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setStatus(BookingStatus.CONFIRMED);
-        // Здесь можно создать Ticket实体
+        Booking savedBooking = bookingRepository.save(booking);
 
-        return mapToResponse(bookingRepository.save(booking));
+        Ticket ticket = ticketRepository.findByBookingId(bookingId)
+                .orElseGet(() -> {
+                    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                    String randomSuffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+                    String ticketNumber = "KINO-" + timestamp + "-" + randomSuffix;
+                    String qrData = UUID.randomUUID().toString().replace("-", "");
+
+                    Ticket newTicket = new Ticket(savedBooking, ticketNumber, qrData);
+                    return ticketRepository.save(newTicket);
+                });
+
+        return mapToResponse(savedBooking, ticket);
     }
 
     @Override
@@ -149,13 +166,40 @@ public class BookingServiceImpl implements BookingService {
         return seatIds.stream().noneMatch(occupied::contains);
     }
 
-    // Приватный метод маппинга (можно вынести в отдельный Mapper класс)
+    @Override
+    public BookingResponse.TicketInfo getTicketByBookingId(Long bookingId) {
+        Ticket ticket = ticketRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new BusinessLogicException("Билет для данного бронирования не найден (возможно, бронь не оплачена)"));
+
+        return mapTicketToInfo(ticket);
+    }
+
+    @Override
+    public byte[] getTicketQrCodeImage(Long bookingId) {
+        Ticket ticket = ticketRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new BusinessLogicException("Билет для данного бронирования не найден"));
+
+        String qrPayload = String.format("TICKET:%s|QR:%s", ticket.getTicketNumber(), ticket.getQrCode());
+        return qrCodeService.generateQrCodeImage(qrPayload, 300, 300);
+    }
+
     private BookingResponse mapToResponse(Booking booking) {
+        Ticket ticket = null;
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            ticket = ticketRepository.findByBookingId(booking.getId()).orElse(null);
+        }
+        return mapToResponse(booking, ticket);
+    }
+
+    private BookingResponse mapToResponse(Booking booking, Ticket ticket) {
         return BookingResponse.builder()
                 .id(booking.getId())
                 .status(booking.getStatus().name())
                 .createdAt(booking.getCreatedAt())
                 .totalAmount(booking.getTotalAmount())
+                .movieTitle(booking.getSession().getMovie().getTitle())
+                .hallName(booking.getSession().getHall().getName())
+                .sessionStartTime(booking.getSession().getStartTime())
                 .seats(booking.getBookedSeats().stream()
                         .map(bs -> BookingResponse.SeatInfo.builder()
                                 .rowNumber(bs.getSeat().getRowNumber())
@@ -163,6 +207,16 @@ public class BookingServiceImpl implements BookingService {
                                 .price(bs.getFixedPrice())
                                 .build())
                         .collect(Collectors.toList()))
+                .ticket(ticket != null ? mapTicketToInfo(ticket) : null)
+                .build();
+    }
+
+    private BookingResponse.TicketInfo mapTicketToInfo(Ticket ticket) {
+        return BookingResponse.TicketInfo.builder()
+                .id(ticket.getId())
+                .ticketNumber(ticket.getTicketNumber())
+                .qrCode(ticket.getQrCode())
+                .createdAt(ticket.getCreatedAt())
                 .build();
     }
 }
