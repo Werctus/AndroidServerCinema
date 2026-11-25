@@ -2,8 +2,9 @@ package com.cinema.controller;
 
 import com.cinema.dto.request.LoginRequest;
 import com.cinema.dto.request.RegisterRequest;
+import com.cinema.dto.response.AuthResponse;
 import com.cinema.dto.response.UserResponse;
-import com.cinema.service.AuthService; // Предположим, у вас есть такой сервис
+import com.cinema.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +23,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        // Возвращает JWT токен
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 }

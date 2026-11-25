@@ -2,6 +2,7 @@ package com.cinema.service;
 
 import com.cinema.dto.request.LoginRequest;
 import com.cinema.dto.request.RegisterRequest;
+import com.cinema.dto.response.AuthResponse;
 import com.cinema.dto.response.UserResponse;
 import com.cinema.entity.User;
 import com.cinema.entity.UserRole;
@@ -40,11 +41,13 @@ public class AuthService {
         return UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .role(user.getRole())
                 .build();
     }
 
-    public String login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessLogicException("Неверный email или пароль"));
 
@@ -52,7 +55,15 @@ public class AuthService {
             throw new BusinessLogicException("Неверный email или пароль");
         }
 
-        // Генерируем токен с ролью пользователя
-        return jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+
+        return AuthResponse.builder()
+                .token(token)
+                .userId(user.getId())
+                .role(user.getRole().name())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .build();
     }
 }
