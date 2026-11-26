@@ -3,12 +3,14 @@ package com.cinema.service.impl;
 import com.cinema.dto.request.SessionRequest;
 import com.cinema.dto.response.SessionResponse;
 import com.cinema.dto.response.SessionSeatsResponse;
+import com.cinema.entity.BookingStatus;
 import com.cinema.entity.Hall;
 import com.cinema.entity.Movie;
 import com.cinema.entity.Seat;
 import com.cinema.entity.Session;
 import com.cinema.exception.BusinessLogicException;
 import com.cinema.repository.BookedSeatRepository;
+import com.cinema.repository.BookingRepository;
 import com.cinema.repository.HallRepository;
 import com.cinema.repository.MovieRepository;
 import com.cinema.repository.SeatRepository;
@@ -34,6 +36,7 @@ public class SessionServiceImpl implements SessionService {
     private final HallRepository hallRepository;
     private final SeatRepository seatRepository;
     private final BookedSeatRepository bookedSeatRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
     @Transactional
@@ -45,8 +48,9 @@ public class SessionServiceImpl implements SessionService {
         Hall hall = hallRepository.findById(request.getHallId())
                 .orElseThrow(() -> new BusinessLogicException("Зал не найден"));
 
+        validateRentalPeriod(movie, request.getStartTime().toLocalDate());
+
         // 2. БИЗНЕС-ВАЛИДАЦИЯ: Проверка пересечения времени
-        // Рассчитываем время окончания нового сеанса
         LocalDateTime endTime = request.getStartTime().plusMinutes(movie.getDuration());
 
         List<Session> overlapping = sessionRepository.findOverlappingSessions(
@@ -67,6 +71,56 @@ public class SessionServiceImpl implements SessionService {
         session.setFormat(request.getFormat() != null ? request.getFormat() : "2D");
 
         return mapToResponse(sessionRepository.save(session));
+    }
+
+    @Override
+    @Transactional
+    public SessionResponse updateSession(Long id, SessionRequest request) {
+        Session session = sessionRepository.findById(id)
+                .orElseThrow(() -> new BusinessLogicException("Сеанс не найден"));
+
+        Movie movie = movieRepository.findById(request.getMovieId())
+                .orElseThrow(() -> new BusinessLogicException("Фильм не найден"));
+
+        Hall hall = hallRepository.findById(request.getHallId())
+                .orElseThrow(() -> new BusinessLogicException("Зал не найден"));
+
+        validateRentalPeriod(movie, request.getStartTime().toLocalDate());
+
+        LocalDateTime endTime = request.getStartTime().plusMinutes(movie.getDuration());
+        List<Session> overlapping = sessionRepository.findOverlappingSessions(
+                        hall.getId(),
+                        request.getStartTime(),
+                        endTime
+                ).stream()
+                .filter(s -> !s.getId().equals(id))
+                .collect(Collectors.toList());
+
+        if (!overlapping.isEmpty()) {
+            throw new BusinessLogicException(
+                    "В выбранном зале уже есть сеанс в это время. " +
+                            "Конфликт с фильмом: " + overlapping.get(0).getMovie().getTitle()
+            );
+        }
+
+        session.setMovie(movie);
+        session.setHall(hall);
+        session.setStartTime(request.getStartTime());
+        session.setPrice(request.getPrice());
+        if (request.getFormat() != null) {
+            session.setFormat(request.getFormat());
+        }
+
+        return mapToResponse(sessionRepository.save(session));
+    }
+
+    private void validateRentalPeriod(Movie movie, LocalDate sessionDate) {
+        if (movie.getReleaseDate() != null && sessionDate.isBefore(movie.getReleaseDate())) {
+            throw new BusinessLogicException("Сеанс не может быть назначен раньше даты выхода фильма в прокат: " + movie.getReleaseDate());
+        }
+        if (movie.getEndDate() != null && sessionDate.isAfter(movie.getEndDate())) {
+            throw new BusinessLogicException("Сеанс не может быть назначен после окончания проката фильма: " + movie.getEndDate());
+        }
     }
 
     @Override
@@ -138,9 +192,17 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
+    @Transactional
     public void deleteSession(Long id) {
-        // В реальном проекте нельзя удалять сеанс, если на него есть брони!
-        // Здесь для простоты просто удаляем, но лучше добавить проверку
+        if (!sessionRepository.existsById(id)) {
+            throw new BusinessLogicException("Сеанс не найден");
+        }
+        boolean hasActiveBookings = !bookingRepository
+                .findBySessionIdAndStatusIn(id, List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED))
+                .isEmpty();
+        if (hasActiveBookings) {
+            throw new BusinessLogicException("Нельзя удалить сеанс, на который есть активные бронирования");
+        }
         sessionRepository.deleteById(id);
     }
 

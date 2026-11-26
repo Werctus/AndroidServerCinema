@@ -25,4 +25,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    // Просроченные неоплаченные брони
+    @Query("SELECT b FROM Booking b WHERE b.status = 'PENDING' AND b.createdAt < :cutoff")
+    List<Booking> findExpiredPendingBookings(@Param("cutoff") LocalDateTime cutoff);
 }

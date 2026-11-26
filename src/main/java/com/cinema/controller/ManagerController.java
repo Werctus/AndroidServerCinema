@@ -47,6 +47,13 @@ public class ManagerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(sessionService.createSession(request));
     }
 
+    @PutMapping("/sessions/{id}")
+    public ResponseEntity<SessionResponse> updateSession(
+            @PathVariable Long id,
+            @Valid @RequestBody SessionRequest request) {
+        return ResponseEntity.ok(sessionService.updateSession(id, request));
+    }
+
     @DeleteMapping("/sessions/{id}")
     public ResponseEntity<Void> deleteSession(@PathVariable Long id) {
         sessionService.deleteSession(id);

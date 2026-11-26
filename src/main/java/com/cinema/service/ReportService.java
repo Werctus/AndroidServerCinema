@@ -4,4 +4,5 @@ import java.time.LocalDate;
 
 public interface ReportService {
     byte[] generateSalesReportExcel(LocalDate startDate, LocalDate endDate);
+    byte[] generateSalesReportPdf(LocalDate startDate, LocalDate endDate);
 }

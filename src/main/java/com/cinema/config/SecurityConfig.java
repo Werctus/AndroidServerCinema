@@ -41,6 +41,7 @@ public class SecurityConfig {
 
                         // Ролевые эндпоинты
                         .requestMatchers("/api/manager/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers("/api/cashier/**").hasAnyRole("CASHIER", "ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/**").hasAnyRole("USER", "CASHIER", "ADMIN")
 

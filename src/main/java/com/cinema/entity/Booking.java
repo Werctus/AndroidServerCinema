@@ -32,6 +32,9 @@ public class Booking {
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookedSeat> bookedSeats = new ArrayList<>();
 
@@ -62,6 +65,9 @@ public class Booking {
 
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
 
     public List<BookedSeat> getBookedSeats() { return bookedSeats; }
     public void setBookedSeats(List<BookedSeat> bookedSeats) { this.bookedSeats = bookedSeats; }

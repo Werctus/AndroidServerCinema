@@ -1,7 +1,11 @@
 package com.cinema.service;
 
 import com.cinema.dto.request.BookingRequest;
+import com.cinema.dto.request.CashierSaleRequest;
 import com.cinema.dto.response.BookingResponse;
+import com.cinema.dto.response.SessionOccupancyResponse;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface BookingService {
@@ -26,4 +30,21 @@ public interface BookingService {
 
     // Генерация изображения QR-кода билета (PNG)
     byte[] getTicketQrCodeImage(Long bookingId);
+
+    // --- Операции кассира ---
+
+    // Продажа билетов на кассе (сразу с подтверждением и опциональной скидкой)
+    BookingResponse sellTicketsAsCashier(Long cashierId, CashierSaleRequest request);
+
+    // Применение скидки к ожидающей оплате брони
+    BookingResponse applyDiscount(Long bookingId, BigDecimal discountPercent);
+
+    // Оформление возврата (отмена брони и освобождение мест)
+    void refundBooking(Long bookingId);
+
+    // Информация о загрузке зала для сеанса
+    SessionOccupancyResponse getSessionOccupancy(Long sessionId);
+
+    // Проверка билета по номеру или QR-коду
+    BookingResponse verifyTicket(String code);
 }

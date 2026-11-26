@@ -10,6 +10,7 @@ import com.cinema.entity.Seat;
 import com.cinema.entity.Session;
 import com.cinema.exception.BusinessLogicException;
 import com.cinema.repository.BookedSeatRepository;
+import com.cinema.repository.BookingRepository;
 import com.cinema.repository.HallRepository;
 import com.cinema.repository.MovieRepository;
 import com.cinema.repository.SeatRepository;
@@ -44,6 +45,8 @@ class SessionServiceTest {
     private SeatRepository seatRepository;
     @Mock
     private BookedSeatRepository bookedSeatRepository;
+    @Mock
+    private BookingRepository bookingRepository;
 
     @InjectMocks
     private SessionServiceImpl sessionService;

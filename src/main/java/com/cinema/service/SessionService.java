@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface SessionService {
     SessionResponse createSession(SessionRequest request);
+    SessionResponse updateSession(Long id, SessionRequest request);
     List<SessionResponse> getSessionsByDate(LocalDate date);
     List<SessionResponse> getSessionsByMovie(Long movieId);
     List<SessionResponse> getSessionsByMovieAndDate(Long movieId, LocalDate date);

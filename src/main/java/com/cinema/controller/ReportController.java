@@ -35,4 +35,21 @@ public class ReportController {
                 .headers(headers)
                 .body(excelContent);
     }
+
+    @GetMapping("/sales/pdf")
+    public ResponseEntity<byte[]> downloadSalesReportPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+
+        byte[] pdfContent = reportService.generateSalesReportPdf(start, end);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "sales_report_" + start + "_to_" + end + ".pdf");
+        headers.setContentLength(pdfContent.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfContent);
+    }
 }

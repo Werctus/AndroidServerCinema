@@ -13,6 +13,7 @@ public class BookingResponse {
     private String status;
     private LocalDateTime createdAt;
     private BigDecimal totalAmount;
+    private BigDecimal discountAmount;
     private String movieTitle;
     private String hallName;
     private LocalDateTime sessionStartTime;
