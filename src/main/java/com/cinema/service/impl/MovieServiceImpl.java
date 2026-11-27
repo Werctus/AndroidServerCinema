@@ -105,6 +105,8 @@ public class MovieServiceImpl implements MovieService {
                 .duration(movie.getDuration())
                 .ageRating(movie.getAgeRating())
                 .releaseDate(movie.getReleaseDate())
+                .endDate(movie.getEndDate())
+                .description(movie.getDescription())
                 .posterUrl(movie.getPosterUrl())
                 .genres(genreNames)
                 .build();

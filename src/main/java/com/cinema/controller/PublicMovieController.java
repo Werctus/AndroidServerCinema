@@ -44,11 +44,20 @@ public class PublicMovieController {
         return ResponseEntity.ok(movieService.searchMovies(query));
     }
 
-    // Расписание сеансов фильма на конкретную дату
+    // Получить детальную информацию о фильме
+    @GetMapping("/{id}")
+    public ResponseEntity<MovieResponse> getMovieById(@PathVariable Long id) {
+        return ResponseEntity.ok(movieService.getMovieById(id));
+    }
+
+    // Расписание сеансов фильма (на конкретную дату или все)
     @GetMapping("/{id}/sessions")
     public ResponseEntity<List<SessionResponse>> getSessions(
             @PathVariable Long id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(sessionService.getSessionsByMovieAndDate(id, date));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        if (date != null) {
+            return ResponseEntity.ok(sessionService.getSessionsByMovieAndDate(id, date));
+        }
+        return ResponseEntity.ok(sessionService.getSessionsByMovie(id));
     }
 }

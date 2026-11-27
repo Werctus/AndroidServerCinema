@@ -13,6 +13,8 @@ public class MovieResponse {
     private Integer duration;
     private String ageRating;
     private LocalDate releaseDate;
+    private LocalDate endDate;
+    private String description;
     private String posterUrl;
     private Set<String> genres; // Отдаем только названия жанров
 }
